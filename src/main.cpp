@@ -20,7 +20,9 @@ struct InsertionInfo{
 vector<int> escolher3NosAleatorios(size_t vertices){
     vector<int> sequencia;
     srand(time(NULL));
-    sequencia.insert(sequencia.begin(), (rand() % (vertices) + 1));
+
+    sequencia.push_back(1);
+    sequencia.push_back(1);
     
     sequencia.insert(sequencia.begin() + 1, (rand() % (vertices) + 1));
     while(sequencia[0] == sequencia[1]){
@@ -39,8 +41,6 @@ vector<int> escolher3NosAleatorios(size_t vertices){
         sequencia.erase(sequencia.begin() + 3);
         sequencia.insert(sequencia.begin() + 3, (rand() % (vertices) + 1));
     }
-
-    sequencia.insert(sequencia.end(), sequencia[0]);
     
     return sequencia;
 }
@@ -109,6 +109,9 @@ void OrdenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
     }
 }
 
+void inserirNaSolucao(Solucao& s, int aresta){
+    
+}
 
 int main(int argc, char** argv) {
 
@@ -150,6 +153,8 @@ int main(int argc, char** argv) {
     for(int i = 0; i < custoInsercao.size(); i++){
         cout << custoInsercao[i].custo << " ";
     }
+
+    
     return 0;
     
 }
