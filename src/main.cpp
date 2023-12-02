@@ -109,9 +109,7 @@ void OrdenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
     }
 }
 
-void inserirNaSolucao(Solucao& s, int aresta){
-    
-}
+
 
 int main(int argc, char** argv) {
 
@@ -143,17 +141,18 @@ int main(int argc, char** argv) {
     for(int i = 0; i < CL.size(); i++){
         cout << CL[i] << " ";
     }
-    printf("\n");
+    cout << endl;
     
     vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s1, CL, data);
     for(int i = 0; i < custoInsercao.size(); i++){
         cout << custoInsercao[i].custo << " ";
     }
+    cout << endl;
     OrdenarEmOrdemCrescente(custoInsercao);
     for(int i = 0; i < custoInsercao.size(); i++){
         cout << custoInsercao[i].custo << " ";
     }
-
+    
     
     return 0;
     
