@@ -20,8 +20,10 @@ struct InsertionInfo{
 vector<int> escolher3NosAleatorios(size_t vertices){
     vector<int> sequencia;
     srand(time(NULL));
-    sequencia.insert(sequencia.begin(), (rand() % (vertices) + 1));
     
+    sequencia.push_back(1);
+    sequencia.push_back(1);
+
     sequencia.insert(sequencia.begin() + 1, (rand() % (vertices) + 1));
     while(sequencia[0] == sequencia[1]){
         sequencia.erase(sequencia.begin() + 1);
@@ -39,8 +41,6 @@ vector<int> escolher3NosAleatorios(size_t vertices){
         sequencia.erase(sequencia.begin() + 3);
         sequencia.insert(sequencia.begin() + 3, (rand() % (vertices) + 1));
     }
-
-    sequencia.insert(sequencia.end(), sequencia[0]);
     
     return sequencia;
 }
@@ -52,7 +52,7 @@ void ExibirSolucao(Solucao *s){
     cout << s->sequencia.back() <<  endl;
 }
 
-vector<int> NosRestantes(Solucao *s, size_t vertices){
+vector<int> nosRestantes(Solucao *s, size_t vertices){
     vector<int> CL;
     bool diferente = true;
     for(size_t j = 1; j <= vertices; j++){
@@ -109,6 +109,43 @@ void OrdenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
     }
 }
 
+void inserirNaSolucao(Solucao& s, vector<InsertionInfo>& custoInsercao, vector<int>& CL, int selecionado){
+    for(int i = 0; i < s.sequencia.size();i++){
+        if(s.sequencia[i] == s.sequencia[custoInsercao[selecionado].arestaRemovida]){
+            s.sequencia.insert(s.sequencia.begin() + i + 1, custoInsercao[selecionado].noInserido);
+            break;
+        }
+    }
+    for(int i = 0; i < CL.size();i++){
+        if(CL[i] == custoInsercao[selecionado].noInserido){
+            CL.erase(CL.begin() + i);
+        }
+    }
+}
+
+Solucao Construcao(size_t vertices, Data& data){
+    Solucao s = {{}, 0.0};
+    s.sequencia = escolher3NosAleatorios(vertices);
+    //ExibirSolucao(& s);
+    vector<int> CL = nosRestantes(&s, vertices);
+    /*for(int i = 0; i < CL.size(); i++){
+        cout << CL[i] << " ";
+    }*/
+    while(!CL.empty()){
+        vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, data);
+        OrdenarEmOrdemCrescente(custoInsercao);
+        /*for(int i = 0; i < custoInsercao.size();i++){
+            cout << custoInsercao[i].custo << "->" << custoInsercao[i].noInserido << " entre " << custoInsercao[i].arestaRemovida << "  " ;
+        }*/
+        //cout << endl;
+        double alpha = (double) rand() / RAND_MAX;
+        int selecionado = rand() % ((int) ceil((alpha + 0.000001) * custoInsercao.size()));
+        //cout << selecionado << endl;
+        inserirNaSolucao(s, custoInsercao, CL, selecionado);
+       // ExibirSolucao(& s);
+    }
+    return s;
+}
 
 int main(int argc, char** argv) {
 
@@ -132,24 +169,13 @@ int main(int argc, char** argv) {
     cost += data.getDistance(n, 1);
     cout << n << " -> " << 1 << endl;
     cout << "Custo de S: " << cost << endl;
-
-    Solucao s1 = {{}, 0.0};
-    s1.sequencia = escolher3NosAleatorios(n); 
-    ExibirSolucao(& s1); 
-    vector<int> CL = NosRestantes(&s1, n);
-    for(int i = 0; i < CL.size(); i++){
-        cout << CL[i] << " ";
-    }
-    printf("\n");
     
-    vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s1, CL, data);
-    for(int i = 0; i < custoInsercao.size(); i++){
-        cout << custoInsercao[i].custo << " ";
-    }
-    OrdenarEmOrdemCrescente(custoInsercao);
-    for(int i = 0; i < custoInsercao.size(); i++){
-        cout << custoInsercao[i].custo << " ";
-    }
+    Solucao s1 = Construcao(n, data);
+    
+    ExibirSolucao(& s1);
+
+    cout << endl;
+
     return 0;
     
 }
