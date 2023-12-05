@@ -20,10 +20,8 @@ struct InsertionInfo{
 vector<int> escolher3NosAleatorios(size_t vertices){
     vector<int> sequencia;
     srand(time(NULL));
+    sequencia.insert(sequencia.begin(), (rand() % (vertices) + 1));
     
-    sequencia.push_back(1);
-    sequencia.push_back(1);
-
     sequencia.insert(sequencia.begin() + 1, (rand() % (vertices) + 1));
     while(sequencia[0] == sequencia[1]){
         sequencia.erase(sequencia.begin() + 1);
@@ -109,6 +107,7 @@ void OrdenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
     }
 }
 
+
 void inserirNaSolucao(Solucao& s, vector<InsertionInfo>& custoInsercao, vector<int>& CL, int selecionado){
     for(int i = 0; i < s.sequencia.size();i++){
         if(s.sequencia[i] == s.sequencia[custoInsercao[selecionado].arestaRemovida]){
@@ -169,13 +168,6 @@ int main(int argc, char** argv) {
     cost += data.getDistance(n, 1);
     cout << n << " -> " << 1 << endl;
     cout << "Custo de S: " << cost << endl;
-    
+
     Solucao s1 = Construcao(n, data);
-    
-    ExibirSolucao(& s1);
-
-    cout << endl;
-
-    return 0;
-    
 }
