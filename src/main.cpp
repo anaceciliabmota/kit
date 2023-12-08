@@ -20,8 +20,10 @@ struct InsertionInfo{
 vector<int> escolher3NosAleatorios(size_t vertices){
     vector<int> sequencia;
     srand(time(NULL));
-    sequencia.insert(sequencia.begin(), (rand() % (vertices) + 1));
     
+    sequencia.push_back(1);
+    sequencia.push_back(1);
+
     sequencia.insert(sequencia.begin() + 1, (rand() % (vertices) + 1));
     while(sequencia[0] == sequencia[1]){
         sequencia.erase(sequencia.begin() + 1);
@@ -40,6 +42,8 @@ vector<int> escolher3NosAleatorios(size_t vertices){
         sequencia.insert(sequencia.begin() + 3, (rand() % (vertices) + 1));
     }
     
+    
+
     return sequencia;
 }
 
@@ -125,27 +129,77 @@ void inserirNaSolucao(Solucao& s, vector<InsertionInfo>& custoInsercao, vector<i
 Solucao Construcao(size_t vertices, Data& data){
     Solucao s = {{}, 0.0};
     s.sequencia = escolher3NosAleatorios(vertices);
-    //ExibirSolucao(& s);
     vector<int> CL = nosRestantes(&s, vertices);
-    /*for(int i = 0; i < CL.size(); i++){
-        cout << CL[i] << " ";
-    }*/
     while(!CL.empty()){
         vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, data);
         OrdenarEmOrdemCrescente(custoInsercao);
-        /*for(int i = 0; i < custoInsercao.size();i++){
-            cout << custoInsercao[i].custo << "->" << custoInsercao[i].noInserido << " entre " << custoInsercao[i].arestaRemovida << "  " ;
-        }*/
-        //cout << endl;
         double alpha = (double) rand() / RAND_MAX;
         int selecionado = rand() % ((int) ceil((alpha + 0.000001) * custoInsercao.size()));
-        //cout << selecionado << endl;
         inserirNaSolucao(s, custoInsercao, CL, selecionado);
-       // ExibirSolucao(& s);
     }
     return s;
 }
 
+bool bestImprovementSwap(Solucao *s, Data& data){
+    double bestDelta = 0;
+    int best_i,best_j;
+    for(int i = 1; i < s->sequencia.size() - 1; i++){
+        int vi = s->sequencia[i];
+        int vi_next = s->sequencia[i+1];
+        int vi_prev = s->sequencia[i-1];
+        for(int j = i+1; j < s->sequencia.size();j++){
+            int vj = s->sequencia[j];
+            int vj_next = s->sequencia[j+1];
+            int vj_prev = s->sequencia[j-1];
+            double delta = -data.getDistance(vi_prev,vi) - data.getDistance(vi, vi_next) + data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next) - data.getDistance(vj_prev, vj) - data.getDistance(vj, vj_next) + data.getDistance(vj_prev, vi) + data.getDistance(vi, vj_next);
+
+            if(delta < bestDelta){
+                bestDelta = delta;
+                best_i = i;
+                best_j = j;
+            }
+        }
+    }
+    //cout << bestDelta << "troca entre: " << best_i << best_j;
+    if(bestDelta < 0){
+        swap(s->sequencia[best_i], s->sequencia[best_j]);
+        s->valorObj = s->valorObj + bestDelta;
+        return true;
+    }
+    return false;
+}
+
+bool bestImprovement2Opt(Solucao *s, Data& data){
+    double bestDelta = 0;
+    int best_i;
+    int best_j;
+    for(int i = 1; i < s->sequencia.size() - 1;i++){
+        //i = primeiro elemento da aresta a ser invertida
+        int vi = s->sequencia[i];
+        int vi_prev = s->sequencia[i-1];
+        for(int j = i + 3; j < s->sequencia.size() - 1; j++){
+            // j = ultimo elemento da aresta a ser invertida
+            int vj = s->sequencia[j];
+            int vj_next = s->sequencia[j+1];
+            double delta = - data.getDistance(vi_prev, vi) - data.getDistance(vj, vj_next) + data.getDistance(vi_prev, vj) + data.getDistance(vi, vj_next);
+            if(delta < bestDelta){
+                bestDelta = delta;
+                best_i = i;
+                best_j = j;
+            }
+        }
+    }
+    if(bestDelta < 0){
+        int cont = 0;
+        while((best_i + cont) < (best_j - cont)){
+            swap(s->sequencia[best_i + cont], s->sequencia[best_j - cont]);
+            cont++;
+        }
+        s->valorObj = s->valorObj + bestDelta;
+        return true;
+    }
+    return false;
+}
 int main(int argc, char** argv) {
 
     auto data = Data(argc, argv[1]);
@@ -170,4 +224,12 @@ int main(int argc, char** argv) {
     cout << "Custo de S: " << cost << endl;
 
     Solucao s1 = Construcao(n, data);
+
+    ExibirSolucao(& s1);
+    
+    /*bool troca = bestImprovement2Opt(& s1, data);
+    cout << endl;
+    cout << troca << endl;
+    ExibirSolucao(& s1);*/
+    return 0;
 }
