@@ -11,10 +11,10 @@ typedef struct Solucao {
         double valorObj = 0.0;
     } Solucao;
 
-void CalculaValorObj (Solucao *s, Data& data){
+void CalculaValorObj (Solucao *s, vector<vector<double>> Matriz){
     s->valorObj = 0;
     for(int i = 0; i < s->sequencia.size() -1;i++){
-        s->valorObj += data.getDistance(s->sequencia[i], s->sequencia[i+1]);
+        s->valorObj += Matriz[s->sequencia[i]-1][s->sequencia[i+1]-1];
     }
 }
 struct InsertionInfo{
@@ -78,7 +78,7 @@ vector<int> nosRestantes(Solucao *s, size_t vertices){
     return CL;
 }
 
-vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& data){
+vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, vector<vector<double>> Matriz){
     vector<InsertionInfo> custoInsercao((s.sequencia.size() - 1) * CL.size());
     int l = 0;
 
@@ -86,7 +86,8 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, Data& d
         int i = s.sequencia[a];
         int j = s.sequencia[a + 1];
         for (auto k : CL){
-            custoInsercao[l].custo = data.getDistance(i, k) + data.getDistance(k, j) - data.getDistance(i, j);
+            //custoInsercao[l].custo = data.getDistance(i, k) + data.getDistance(k, j) - data.getDistance(i, j);
+            custoInsercao[l].custo = Matriz[i-1][k-1] + Matriz[k-1][j-1] - Matriz[i-1][j-1];
             custoInsercao[l].arestaRemovida = a;
             custoInsercao[l].noInserido = k;
             l++;
@@ -131,12 +132,12 @@ void inserirNaSolucao(Solucao& s, vector<InsertionInfo>& custoInsercao, vector<i
     }
 }
 
-Solucao Construcao(int vertices, Data& data){
+Solucao Construcao(int vertices, vector<vector<double>> Matriz){
     Solucao s = {{}, 0.0};
     s.sequencia = escolher3NosAleatorios(vertices);
     vector<int> CL = nosRestantes(&s, vertices);
     while(!CL.empty()){
-        vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, data);
+        vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, Matriz);
         OrdenarEmOrdemCrescente(custoInsercao);
         double alpha = (double) rand() / RAND_MAX;
         int selecionado = rand() % ((int) ceil((alpha + 0.000001) * custoInsercao.size()));
@@ -145,7 +146,7 @@ Solucao Construcao(int vertices, Data& data){
     return s;
 }
 
-bool bestImprovementSwap(Solucao *s, Data& data){
+bool bestImprovementSwap(Solucao *s, vector<vector<double>> Matriz){
     double bestDelta = 0;
     int best_i,best_j;
     for(int i = 1; i < s->sequencia.size() - 1; i++){
@@ -158,9 +159,11 @@ bool bestImprovementSwap(Solucao *s, Data& data){
             int vj_prev = s->sequencia[j-1];
             double delta = 0;
             if(i + 1!= j){
-                delta = -data.getDistance(vi_prev,vi) - data.getDistance(vi, vi_next) + data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next) - data.getDistance(vj_prev, vj) - data.getDistance(vj, vj_next) + data.getDistance(vj_prev, vi) + data.getDistance(vi, vj_next);
+                /*delta = -data.getDistance(vi_prev,vi) - data.getDistance(vi, vi_next) + data.getDistance(vi_prev, vj) + data.getDistance(vj, vi_next) - data.getDistance(vj_prev, vj) - data.getDistance(vj, vj_next) + data.getDistance(vj_prev, vi) + data.getDistance(vi, vj_next);*/
+                delta = -Matriz[vi_prev-1][vi-1] - Matriz[vi-1][vi_next-1] + Matriz[vi_prev-1][vj-1] + Matriz[vj-1][vi_next-1] - Matriz[vj_prev-1][vj-1] - Matriz[vj-1][vj_next-1] + Matriz[vj_prev-1][vi-1] + Matriz[vi-1][vj_next-1];
             } else {
-                delta = -data.getDistance(vi_prev,vi) + data.getDistance(vi_prev, vj) - data.getDistance(vj, vj_next)  + data.getDistance(vi, vj_next);
+                /*delta = -data.getDistance(vi_prev,vi) + data.getDistance(vi_prev, vj) - data.getDistance(vj, vj_next)  + data.getDistance(vi, vj_next);*/
+                delta = -Matriz[vi_prev-1][vi-1] + Matriz[vi_prev-1][vj-1] - Matriz[vj-1][vj_next-1] + Matriz[vi-1][vj_next-1];
             }
             if(delta < bestDelta){
                 bestDelta = delta;
@@ -178,7 +181,7 @@ bool bestImprovementSwap(Solucao *s, Data& data){
     return false;
 }
 
-bool bestImprovement2Opt(Solucao *s, Data& data){
+bool bestImprovement2Opt(Solucao *s, vector<vector<double>> Matriz){
     double bestDelta = 0;
     int best_i;
     int best_j;
@@ -190,7 +193,8 @@ bool bestImprovement2Opt(Solucao *s, Data& data){
             // j = ultimo elemento da aresta a ser invertida
             int vj = s->sequencia[j];
             int vj_next = s->sequencia[j+1];
-            double delta = - data.getDistance(vi_prev, vi) - data.getDistance(vj, vj_next) + data.getDistance(vi_prev, vj) + data.getDistance(vi, vj_next);
+            /*double delta = - data.getDistance(vi_prev, vi) - data.getDistance(vj, vj_next) + data.getDistance(vi_prev, vj) + data.getDistance(vi, vj_next);*/
+            double delta = -Matriz[vi_prev-1][vi-1] - Matriz[vj-1][vj_next-1] + Matriz[vi_prev-1][vj-1] + Matriz[vi-1][vj_next-1];
             if(delta < bestDelta){
                 bestDelta = delta;
                 best_i = i;
@@ -210,7 +214,7 @@ bool bestImprovement2Opt(Solucao *s, Data& data){
     return false;
 }
 
-bool bestImprovementOrOpt(Solucao *s, Data& data, int tam_bloco){
+bool bestImprovementOrOpt(Solucao *s, vector<vector<double>> Matriz, int tam_bloco){
     double bestDelta = 0;
     int best_i1;
     int best_i2;
@@ -223,7 +227,8 @@ bool bestImprovementOrOpt(Solucao *s, Data& data, int tam_bloco){
         for(int j = i + tam_bloco; j < s->sequencia.size() - 1; j++){
             int vj = s->sequencia[j];
             int vj_next = s->sequencia[j+1];
-            double delta = -data.getDistance(vi1_prev, vi1) - data.getDistance(vi2, vi2_next) - data.getDistance(vj, vj_next) + data.getDistance(vi1_prev, vi2_next) + data.getDistance(vj, vi2) + data.getDistance(vi1, vj_next); 
+            /*double delta = -data.getDistance(vi1_prev, vi1) - data.getDistance(vi2, vi2_next) - data.getDistance(vj, vj_next) + data.getDistance(vi1_prev, vi2_next) + data.getDistance(vj, vi2) + data.getDistance(vi1, vj_next);*/ 
+            double delta = -Matriz[vi1_prev-1][vi1-1] - Matriz[vi2-1][vi2_next-1]- Matriz[vj-1][vj_next-1] + Matriz[vi1_prev-1][vi2_next-1] + Matriz[vj-1][vi2-1] + Matriz[vi1-1][vj_next-1];
             if (delta < bestDelta){
                 bestDelta = delta;
                 best_i1 = i;
@@ -232,7 +237,7 @@ bool bestImprovementOrOpt(Solucao *s, Data& data, int tam_bloco){
             }
         }
     }
-    
+
     int cont = 0;
     if(bestDelta < 0){
         do{
@@ -247,7 +252,7 @@ bool bestImprovementOrOpt(Solucao *s, Data& data, int tam_bloco){
     return false;
 }
 
-void BuscaLocal(Solucao *s, Data& data){
+void BuscaLocal(Solucao *s, vector<vector<double>> Matriz){
     vector<int> NL = {1, 2, 3, 4, 5};
     bool improved = false;
 
@@ -255,23 +260,23 @@ void BuscaLocal(Solucao *s, Data& data){
         int n = rand() % NL.size();
         switch (NL[n]){
             case 1:
-                improved = bestImprovementSwap(s, data);
+                improved = bestImprovementSwap(s, Matriz);
                 //cout << improved << endl;
                 break;
             case 2:
-                improved = bestImprovement2Opt(s, data);
+                improved = bestImprovement2Opt(s, Matriz);
                 //cout << improved<< endl;
                 break;
             case 3:
-                improved = bestImprovementOrOpt(s, data, 1);
+                improved = bestImprovementOrOpt(s, Matriz, 1);
                 //cout << "3"<< endl;
                 break;
             case 4: 
-                improved = bestImprovementOrOpt(s, data, 2);
+                improved = bestImprovementOrOpt(s, Matriz, 2);
                 //cout << "4"<< endl;
                 break;
             case 5:
-                improved = bestImprovementOrOpt(s, data, 3);
+                improved = bestImprovementOrOpt(s, Matriz, 3);
                 //  cout << "5"<< endl;
                 break;
         }
@@ -283,7 +288,8 @@ void BuscaLocal(Solucao *s, Data& data){
     }
 }
 
-Solucao Perturbacao (Solucao best, Data& data){
+Solucao Perturbacao (Solucao best, vector<vector<double>> Matriz){
+
     Solucao s = best;
     int vertices = best.sequencia.size() - 1;
     int i, j, tam_i, tam_j;
@@ -308,7 +314,8 @@ Solucao Perturbacao (Solucao best, Data& data){
     
     }while(((i + tam_i) > j && (j + tam_j) > i) || ((j + tam_j) > vertices));
 
-    double delta = -data.getDistance(s.sequencia[i], s.sequencia[i - 1]) - data.getDistance(s.sequencia[i + tam_i -1], s.sequencia[i + tam_i]) - data.getDistance(s.sequencia[j], s.sequencia[j-1]) - data.getDistance(s.sequencia[j+tam_j], s.sequencia[j+tam_j-1]) + data.getDistance(s.sequencia[i-1], s.sequencia[j]) + data.getDistance(s.sequencia[j+tam_j-1], s.sequencia[i+tam_i]) + data.getDistance(s.sequencia[j-1], s.sequencia[i]) + data.getDistance(s.sequencia[i+tam_i -1], s.sequencia[j+tam_j]);
+    /*double delta = -data.getDistance(s.sequencia[i], s.sequencia[i - 1])* - data.getDistance(s.sequencia[i + tam_i -1], s.sequencia[i + tam_i])* - data.getDistance(s.sequencia[j], s.sequencia[j-1])* - data.getDistance(s.sequencia[j+tam_j], s.sequencia[j+tam_j-1])* + data.getDistance(s.sequencia[i-1], s.sequencia[j])* + data.getDistance(s.sequencia[j+tam_j-1], s.sequencia[i+tam_i])* + data.getDistance(s.sequencia[j-1], s.sequencia[i]) *+ data.getDistance(s.sequencia[i+tam_i -1], s.sequencia[j+tam_j]);*/
+    double delta = -Matriz[s.sequencia[i]-1][s.sequencia[i-1]-1] - Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[i+tam_i]-1] - Matriz[s.sequencia[j]-1][s.sequencia[j-1]-1] - Matriz[s.sequencia[j+tam_j]-1][s.sequencia[j+tam_j-1]-1] + Matriz[s.sequencia[i-1]-1][s.sequencia[j]-1] + Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[i+tam_i]-1] + Matriz[s.sequencia[j-1]-1][s.sequencia[i]-1] + Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[j+tam_j]-1];
     s.valorObj = s.valorObj + delta;
     //faz a troca dos segmentos
     int cont = 0;
@@ -346,23 +353,23 @@ Solucao Perturbacao (Solucao best, Data& data){
 }
 
 
-Solucao ILS(int maxIter, int maxIterIls, Data& data){
+Solucao ILS(int maxIter, int maxIterIls, vector<vector<double>> Matriz){
     Solucao bestOfAll;
     bestOfAll.valorObj = INFINITY;
-    int vertices = data.getDimension();
+    int vertices = Matriz.size();
     for(int i = 0; i < maxIter;i++){
-        Solucao s = Construcao(vertices, data);
+        Solucao s = Construcao(vertices, Matriz);
         Solucao best = s;
         int iterIls = 0;
 
         while(iterIls <= maxIterIls){
-            BuscaLocal(&s, data);
+            BuscaLocal(&s, Matriz);
      
             if(s.valorObj < best.valorObj){
                 best = s;
                 iterIls = 0;
             }
-            s = Perturbacao(best, data);
+            s = Perturbacao(best, Matriz);
             iterIls++;
         }
         if(best.valorObj < bestOfAll.valorObj)
@@ -373,11 +380,45 @@ Solucao ILS(int maxIter, int maxIterIls, Data& data){
 
 
 int main(int argc, char** argv) {
+    double custo = 0;
+    double tempo = 0;
+    for(int l = 0; l < 10;l++){
+        clock_t start, end;
+        start = clock();
+        auto data = Data(argc, argv[1]);
+        data.read();
+        int n = data.getDimension();
+        vector<vector<double>> Matriz(n, vector<double>(n));
+    
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < n; j++){
+                Matriz[i][j] = data.getDistance(i+1,j+1);
+            }
+        }
+   
+        int maxIter = 50;
+        int maxIterIls;
+        if(n >= 150)
+            maxIterIls = n/2;
+        else
+            maxIterIls = n;
+        Solucao best = ILS(maxIter, maxIterIls, Matriz);
+        CalculaValorObj(& best, Matriz);
+        custo += best.valorObj;
+        end = clock();
+        double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+        tempo += time_taken;
+    }
+    
+    double custo_medio = custo/10;
+    double tempo_medio = tempo/10;
+    cout << "custo: " << custo_medio << endl;
+    cout << "media de tempo gasto: " << fixed << tempo_medio;
+    cout << " secs" << endl;
+        return 0;
 
-    auto data = Data(argc, argv[1]);
-    data.read();
-    size_t n = data.getDimension();
-    Solucao s;
+}
+ /*Solucao s;
 
     cout << "Dimension: " << n << endl;
     cout << "DistanceMatrix: " << endl;
@@ -391,19 +432,4 @@ int main(int argc, char** argv) {
     }
     cost += data.getDistance(n, 1);
     cout << n << " -> " << 1 << endl;
-    cout << "Custo de S: " << cost << endl;
-
-    int maxIter = 50;
-    int maxIterIls;
-    if(n >= 150)
-        maxIterIls = n/2;
-    else
-        maxIterIls = n;
-    Solucao best = ILS(maxIter, maxIterIls, data);
-
-    ExibirSolucao(& best);
-    cout << "custo:" << best.valorObj << endl; 
-    CalculaValorObj(& best, data);
-    cout << "custo: " << best.valorObj<< endl;
-    return 0;
-}
+    cout << "Custo de S: " << cost << endl;*/
