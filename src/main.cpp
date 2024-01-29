@@ -25,7 +25,6 @@ struct InsertionInfo{
 
 vector<int> escolher3NosAleatorios(size_t vertices){
     vector<int> sequencia;
-    srand(time(NULL));
     
     sequencia.push_back(1);
     sequencia.push_back(1);
@@ -95,28 +94,51 @@ vector<InsertionInfo> calcularCustoInsercao(Solucao& s, vector<int>& CL, vector<
     }
     return custoInsercao;
 }
+void TrocarElementos(InsertionInfo& a, InsertionInfo& b) {
+    InsertionInfo aux = a;
+    a = b;
+    b = aux;
+}
 
-void OrdenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
+int Particionar(vector<InsertionInfo>& custoInsercao, int baixo, int alto) {
+    double pivo = custoInsercao[alto].custo;
+    int i = baixo - 1;
+
+    for (int j = baixo; j < alto; j++) {
+        if (custoInsercao[j].custo <= pivo) {
+            i++;
+            TrocarElementos(custoInsercao[i], custoInsercao[j]);
+        }
+    }
+    //coloca o pivô na posicao em que ele fica com os menores a esquerda e os elementos maiores à direita
+    TrocarElementos(custoInsercao[i + 1], custoInsercao[alto]);
+    return i + 1;
+}
+
+void QuickSort(vector<InsertionInfo>& custoInsercao, int baixo, int alto) {
+    if (baixo < alto) {
+        int indicePivo = Particionar(custoInsercao, baixo, alto);
+        QuickSort(custoInsercao, baixo, indicePivo - 1);
+        QuickSort(custoInsercao, indicePivo + 1, alto);
+    }
+}
+
+void OrdenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao) {
+    QuickSort(custoInsercao, 0, custoInsercao.size() - 1);
+}
+/*void OrdenarEmOrdemCrescente(vector<InsertionInfo>& custoInsercao){
     InsertionInfo aux;
         for(int i = 0; i < custoInsercao.size();i++){
             for(int j = i + 1; j < custoInsercao.size();j++){
                 if(custoInsercao[i].custo > custoInsercao[j].custo){  
-                    aux.custo = custoInsercao[i].custo;
-                    aux.arestaRemovida = custoInsercao[i].arestaRemovida;
-                    aux.noInserido = custoInsercao[i].noInserido;
-
-                    custoInsercao[i].custo = custoInsercao[j].custo;
-                    custoInsercao[i].arestaRemovida = custoInsercao[j].arestaRemovida;
-                    custoInsercao[i].noInserido = custoInsercao[j].noInserido;
-
-                    custoInsercao[j].custo = aux.custo;
-                    custoInsercao[j].arestaRemovida = aux.arestaRemovida;
-                    custoInsercao[j].noInserido = aux.noInserido;
+                    aux = custoInsercao[i];
+                    custoInsercao[i] = custoInsercao[j];
+                    custoInsercao[j] = aux;
                 }
         }
     }
 }
-
+*/
 
 void inserirNaSolucao(Solucao& s, vector<InsertionInfo>& custoInsercao, vector<int>& CL, int selecionado){
     for(int i = 0; i < s.sequencia.size();i++){
@@ -133,16 +155,28 @@ void inserirNaSolucao(Solucao& s, vector<InsertionInfo>& custoInsercao, vector<i
 }
 
 Solucao Construcao(int vertices, vector<vector<double>> Matriz){
+    //clock_t start,end, startt, endt;
+    //startt= clock();
+    double tempo_ordenacao = 0;
     Solucao s = {{}, 0.0};
     s.sequencia = escolher3NosAleatorios(vertices);
     vector<int> CL = nosRestantes(&s, vertices);
     while(!CL.empty()){
         vector<InsertionInfo> custoInsercao = calcularCustoInsercao(s, CL, Matriz);
+        //start = clock();
         OrdenarEmOrdemCrescente(custoInsercao);
+        //end = clock();
+        //tempo_ordenacao += double(end-start)/double(CLOCKS_PER_SEC);
         double alpha = (double) rand() / RAND_MAX;
         int selecionado = rand() % ((int) ceil((alpha + 0.000001) * custoInsercao.size()));
-        inserirNaSolucao(s, custoInsercao, CL, selecionado);
+        inserirNaSolucao(s, custoInsercao, CL, selecionado); 
     }
+    /*endt = clock();
+    double tempo_costrucao2 = double(endt-startt)/double(CLOCKS_PER_SEC);
+    cout << "Tempo ordenacao: " << fixed << tempo_ordenacao;
+    cout << endl;
+    cout << "tempo execucao: " << fixed << tempo_costrucao2;
+    cout<< endl;*/
     return s;
 }
 
@@ -313,10 +347,25 @@ Solucao Perturbacao (Solucao best, vector<vector<double>> Matriz){
         }
     
     }while(((i + tam_i) > j && (j + tam_j) > i) || ((j + tam_j) > vertices));
-
-    /*double delta = -data.getDistance(s.sequencia[i], s.sequencia[i - 1])* - data.getDistance(s.sequencia[i + tam_i -1], s.sequencia[i + tam_i])* - data.getDistance(s.sequencia[j], s.sequencia[j-1])* - data.getDistance(s.sequencia[j+tam_j], s.sequencia[j+tam_j-1])* + data.getDistance(s.sequencia[i-1], s.sequencia[j])* + data.getDistance(s.sequencia[j+tam_j-1], s.sequencia[i+tam_i])* + data.getDistance(s.sequencia[j-1], s.sequencia[i]) *+ data.getDistance(s.sequencia[i+tam_i -1], s.sequencia[j+tam_j]);*/
-    double delta = -Matriz[s.sequencia[i]-1][s.sequencia[i-1]-1] - Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[i+tam_i]-1] - Matriz[s.sequencia[j]-1][s.sequencia[j-1]-1] - Matriz[s.sequencia[j+tam_j]-1][s.sequencia[j+tam_j-1]-1] + Matriz[s.sequencia[i-1]-1][s.sequencia[j]-1] + Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[i+tam_i]-1] + Matriz[s.sequencia[j-1]-1][s.sequencia[i]-1] + Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[j+tam_j]-1];
+    
+    double delta;
+    if((i+ tam_i) == j || (j +tam_j) == i){
+        if( i < j){
+            delta = - Matriz[s.sequencia[i]-1][s.sequencia[i-1]-1] - Matriz[s.sequencia[i+tam_i -1]-1][s.sequencia[i+tam_i]-1] -Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[j+tam_j]-1] + Matriz[s.sequencia[i-1]-1][s.sequencia[j]-1] + Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[i]-1] + Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[j+tam_j]-1];
+        }
+        else{
+            delta = -Matriz[s.sequencia[j]-1][s.sequencia[j-1]-1] - Matriz[s.sequencia[j+tam_j -1]-1][s.sequencia[j+tam_j]-1] -Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[i+tam_i]-1] + Matriz[s.sequencia[j-1]-1][s.sequencia[i]-1] + Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[j]-1] + Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[i+tam_i]-1];
+        }
+    }else{
+        if(i < j){
+            delta = -Matriz[s.sequencia[i]-1][s.sequencia[i-1]-1] - Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[i+tam_i]-1] - Matriz[s.sequencia[j]-1][s.sequencia[j-1]-1] - Matriz[s.sequencia[j+tam_j]-1][s.sequencia[j+tam_j-1]-1] + Matriz[s.sequencia[i-1]-1][s.sequencia[j]-1] + Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[i+tam_i]-1] + Matriz[s.sequencia[j-1]-1][s.sequencia[i]-1] + Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[j+tam_j]-1];
+        }
+        else{
+            delta = -Matriz[s.sequencia[j]-1][s.sequencia[j-1]-1] - Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[j+tam_j]-1] - Matriz[s.sequencia[i]-1][s.sequencia[i-1]-1] - Matriz[s.sequencia[i+tam_i]-1][s.sequencia[i+tam_i-1]-1] + Matriz[s.sequencia[j-1]-1][s.sequencia[i]-1] + Matriz[s.sequencia[i+tam_i-1]-1][s.sequencia[j+tam_j]-1] + Matriz[s.sequencia[i-1]-1][s.sequencia[j]-1] + Matriz[s.sequencia[j+tam_j-1]-1][s.sequencia[i+tam_i]-1];
+        }
+    }
     s.valorObj = s.valorObj + delta;
+    
     //faz a troca dos segmentos
     int cont = 0;
     if(i < j){
@@ -354,27 +403,44 @@ Solucao Perturbacao (Solucao best, vector<vector<double>> Matriz){
 
 
 Solucao ILS(int maxIter, int maxIterIls, vector<vector<double>> Matriz){
+   // clock_t start1, start2, start3, start4, start5;
+    //double tempo_while = 0, tempo_for = 0, tempo_construcao = 0;
     Solucao bestOfAll;
     bestOfAll.valorObj = INFINITY;
     int vertices = Matriz.size();
+    //start1 =clock();
     for(int i = 0; i < maxIter;i++){
+       // start5 = clock();
         Solucao s = Construcao(vertices, Matriz);
+        //start2= clock();
+        CalculaValorObj(& s, Matriz);
         Solucao best = s;
         int iterIls = 0;
-
+        
+        //tempo_construcao += double(start2 - start5)/ double(CLOCKS_PER_SEC);
         while(iterIls <= maxIterIls){
+            
             BuscaLocal(&s, Matriz);
-     
             if(s.valorObj < best.valorObj){
                 best = s;
                 iterIls = 0;
             }
+            
             s = Perturbacao(best, Matriz);
             iterIls++;
         }
+        //start3 =clock();
+        //tempo_while = tempo_while + (double(start3-start2) / double(CLOCKS_PER_SEC));
+    
         if(best.valorObj < bestOfAll.valorObj)
             bestOfAll = best;
     }
+    /*start4 =clock();
+    tempo_for = tempo_for +  (double(start4-start1) / double(CLOCKS_PER_SEC));
+    cout<< " tempo while: " << fixed << tempo_while;
+    cout<< " tempo for: " << fixed << tempo_for;
+    cout << " tempo construcao: " << fixed << tempo_construcao;
+    cout << endl;*/
     return bestOfAll;   
 }
 
@@ -382,6 +448,7 @@ Solucao ILS(int maxIter, int maxIterIls, vector<vector<double>> Matriz){
 int main(int argc, char** argv) {
     double custo = 0;
     double tempo = 0;
+    srand(time(NULL));
     for(int l = 0; l < 10;l++){
         clock_t start, end;
         start = clock();
@@ -415,7 +482,9 @@ int main(int argc, char** argv) {
     cout << "custo: " << custo_medio << endl;
     cout << "media de tempo gasto: " << fixed << tempo_medio;
     cout << " secs" << endl;
-        return 0;
+    
+    
+    return 0;
 
 }
  /*Solucao s;
